@@ -70,7 +70,7 @@
   <video id="previa" playsinline controls preload="auto"></video>
   <button id="assistir" style="font-size:18px;padding:12px 22px;border-radius:99px;border:0;background:#A41815;color:#fff">▶ Assistir a prévia</button>
   <div class="linha" style="justify-content:center">
-    <button id="compartilhar">Salvar vídeo</button>
+    <button id="compartilhar">Enviar para o Mac (AirDrop)</button>
     <button class="sec" id="baixar">Baixar arquivo</button>
     <button class="sec" id="descartar">Gravar de novo</button>
   </div>
@@ -93,7 +93,7 @@
   $('texto').addEventListener('input', e => { conf.texto = e.target.value; guardar(); });
 
   // roteiros prontos (11/11): o Nuru manda; um toque põe o texto no teleprompter
-  const PRONTOS = [{"nome": "F-AB4 Abono", "texto": "Repare nessa linha do contracheque.\n\nSe ela aparece no seu, esse vídeo é pra você.\n\nVocê é servidor público federal, já podia se aposentar e decidiu continuar trabalhando? É por isso que essa linha está aí.\n\nVocê sabia que vários servidores públicos federais estão ingressando com a ação judicial para reaverem prejuízos que estão tendo no 13º e nas férias?\n\nVocê não precisa entender esse processo. Basta você encontrar essa linha no seu contracheque.\n\nQuer saber se você tá tendo prejuízo ou não?\n\nClica aqui embaixo e vem conversar comigo."}, {"nome": "F-BE1 Bonus", "texto": "Aposentado ou pensionista da Receita? Procura essa linha no seu contracheque agora.\n\nSe ela aparece no seu, esse vídeo é pra você.\n\nVocê sabia que vários servidores públicos da Receita Federal do Brasil estão ingressando com a ação judicial para reaverem prejuízos que estão tendo em seus contracheques?\n\nVocê não precisa entender esse processo. Basta você encontrar essa linha no seu contracheque.\n\nQuer saber se você tá tendo prejuízo ou não?\n\nClica aqui embaixo e vem conversar comigo."}];
+  const PRONTOS = [{"nome": "F-AB4 Abono", "texto": "Pegue o seu contracheque e procure essa linha: abono de permanência. Se aparecer essa linha, esse vídeo é pra você.\n\nVocê é servidor público federal, já podia se aposentar e decidiu continuar trabalhando? É por isso que essa linha está aí.\n\nVocê sabia que vários servidores públicos federais estão ingressando com a ação judicial para reaverem prejuízos que estão tendo no 13º e nas férias?\n\nVocê não precisa entender esse processo. Basta você encontrar essa linha no seu contracheque.\n\nQuer saber se você tá tendo prejuízo ou não?\n\nClica aqui embaixo e vem conversar comigo."}, {"nome": "F-BE1 Bonus", "texto": "Aposentado ou pensionista da Receita? Procura essa linha no seu contracheque agora.\n\nSe ela aparece no seu, esse vídeo é pra você.\n\nVocê sabia que vários servidores públicos da Receita Federal do Brasil estão ingressando com a ação judicial para reaverem prejuízos que estão tendo em seus contracheques?\n\nVocê não precisa entender esse processo. Basta você encontrar essa linha no seu contracheque.\n\nQuer saber se você tá tendo prejuízo ou não?\n\nClica aqui embaixo e vem conversar comigo."}];
   for (const r of PRONTOS) { const b = document.createElement('button'); b.textContent = r.nome; b.style.cssText = 'padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.25);background:#A41815;color:#fff;font-size:15px';
     b.onclick = () => { conf.texto = r.texto; $('texto').value = r.texto; guardar(); }; $('prontos').appendChild(b); }
 
