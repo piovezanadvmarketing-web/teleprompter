@@ -14,7 +14,7 @@
   button.sec { background:rgba(255,255,255,.14); }
   button:disabled { opacity:.4; }
   /* tela inicial */
-  #inicio { position:fixed; inset:0; background:var(--tinta); display:flex; flex-direction:column; gap:14px; padding:max(20px,env(safe-area-inset-top)) 20px max(20px,env(safe-area-inset-bottom)); }
+  #inicio { position:fixed; inset:0; overflow-y:auto; -webkit-overflow-scrolling:touch; touch-action:manipulation; background:var(--tinta); display:flex; flex-direction:column; gap:14px; padding:max(20px,env(safe-area-inset-top)) 20px max(20px,env(safe-area-inset-bottom)); }
   #inicio h1 { font-size:22px; } #inicio h1 b { color:#e0483f; }
   #inicio p { opacity:.75; font-size:14px; }
   #texto { flex:1; width:100%; border-radius:16px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:var(--creme); font-size:17px; padding:14px; resize:none; }
@@ -82,7 +82,7 @@
   'use strict';
   const $ = id => document.getElementById(id);
   const CHAVE = 'teleprompter-piovezan';
-  const salvo = JSON.parse(localStorage.getItem(CHAVE) || '{}');
+  let salvo = {}; try { salvo = JSON.parse(localStorage.getItem(CHAVE) || '{}') || {}; } catch { salvo = {}; }
   const conf = { texto: salvo.texto || '', vel: salvo.vel || 3, tam: salvo.tam || 34 };
   const guardar = () => { try { localStorage.setItem(CHAVE, JSON.stringify(conf)); } catch {} };
 
@@ -112,7 +112,7 @@
     if (!navigator.mediaDevices?.getUserMedia) { avisar('Este navegador não deixa usar a câmera aqui. Abra o endereço com https.'); return false; }
     try {
       fluxo = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 1920 }, height: { ideal: 1080 } },
+        video: { facingMode: 'user', width: { ideal: 1080 }, height: { ideal: 1920 }, aspectRatio: { ideal: 9/16 } },
         audio: { echoCancellation: true, noiseSuppression: true }
       });
       $('cam').srcObject = fluxo;
