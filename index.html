@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1C1B18">
+<title>Teleprompter · Piovezan</title>
+<style>
+  :root { --v:#A41815; --tinta:#1C1B18; --creme:#F4EFE6; }
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html,body { height:100%; background:#000; color:var(--creme); font:16px/1.4 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif; overflow:hidden; }
+  button { font:inherit; border:0; border-radius:999px; background:var(--v); color:#fff; font-weight:600; min-height:52px; padding:0 22px; cursor:pointer; }
+  button.sec { background:rgba(255,255,255,.14); }
+  button:disabled { opacity:.4; }
+  /* tela inicial */
+  #inicio { position:fixed; inset:0; background:var(--tinta); display:flex; flex-direction:column; gap:14px; padding:max(20px,env(safe-area-inset-top)) 20px max(20px,env(safe-area-inset-bottom)); }
+  #inicio h1 { font-size:22px; } #inicio h1 b { color:#e0483f; }
+  #inicio p { opacity:.75; font-size:14px; }
+  #texto { flex:1; width:100%; border-radius:16px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:var(--creme); font-size:17px; padding:14px; resize:none; }
+  .linha { display:flex; gap:10px; flex-wrap:wrap; } .linha button { flex:1; }
+  /* gravação */
+  #palco { position:fixed; inset:0; display:none; }
+  video#cam { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transform:scaleX(-1); background:#000; }
+  #faixa { position:absolute; left:0; right:0; top:0; height:var(--alt,34vh); padding-top:env(safe-area-inset-top); background:rgba(10,10,10,.62); overflow:hidden; -webkit-mask-image:linear-gradient(#000 70%,transparent); mask-image:linear-gradient(#000 70%,transparent); }
+  #rolo { padding:30px 22px 60vh; font-size:var(--tam,34px); line-height:1.35; font-weight:600; white-space:pre-wrap; will-change:transform; text-shadow:0 1px 3px #000; }
+  #faixa.pausado::after { content:"pausado — toque para continuar"; position:absolute; right:12px; bottom:14px; font-size:13px; background:var(--v); padding:4px 10px; border-radius:99px; }
+  #marca { position:absolute; left:0; right:0; top:calc(env(safe-area-inset-top) + 30px + var(--tam,34px)*1.35); height:2px; background:rgba(164,24,21,.6); pointer-events:none; }
+  #barra { position:absolute; left:0; right:0; bottom:0; padding:12px 12px max(14px,env(safe-area-inset-bottom)); display:flex; gap:8px; align-items:center; justify-content:center; flex-wrap:wrap; background:linear-gradient(transparent,rgba(0,0,0,.7)); }
+  #barra .grupo { display:flex; gap:6px; align-items:center; background:rgba(0,0,0,.45); border-radius:999px; padding:4px; }
+  #barra .grupo span { min-width:58px; text-align:center; font-size:13px; opacity:.85; }
+  #barra .grupo button { min-height:44px; min-width:44px; padding:0 12px; }
+  #gravar { min-width:120px; } #gravar.on { background:#fff; color:var(--v); }
+  #contagem { position:absolute; inset:0; display:none; align-items:center; justify-content:center; font-size:30vmin; font-weight:800; text-shadow:0 4px 30px #000; pointer-events:none; }
+  #tempo { position:absolute; right:14px; top:calc(var(--alt,34vh) + 10px); background:var(--v); padding:4px 12px; border-radius:99px; font-variant-numeric:tabular-nums; display:none; }
+  #salvar { position:fixed; inset:0; background:rgba(28,27,24,.96); display:none; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:24px; text-align:center; }
+  #salvar video { max-width:100%; max-height:50vh; border-radius:12px; }
+  #aviso { position:fixed; left:12px; right:12px; bottom:calc(90px + env(safe-area-inset-bottom)); background:var(--v); padding:12px 14px; border-radius:14px; display:none; font-size:14px; }
+</style>
+</head>
+<body>
+<section id="inicio">
+  <h1>Teleprompter <b>Piovezan</b></h1>
+  <p>Cole o roteiro abaixo. Ele fica guardado só neste celular. Depois toque em <b>Abrir câmera</b>: o texto passa no alto da tela, pertinho da lente.</p>
+  <div id="prontos" style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px"></div>
+  <textarea id="texto" placeholder="Cole aqui o texto do roteiro…"></textarea>
+  <div class="linha">
+    <button class="sec" id="colar">Colar</button>
+    <button class="sec" id="limpar">Limpar</button>
+    <button id="abrir">Abrir câmera</button>
+  </div>
+</section>
+
+<section id="palco">
+  <video id="cam" playsinline autoplay muted></video>
+  <div id="faixa"><div id="rolo"></div></div>
+  <div id="marca"></div>
+  <div id="tempo">00:00</div>
+  <div id="contagem"></div>
+  <div id="barra">
+    <button class="sec" id="voltar" aria-label="Voltar ao texto">✎</button>
+    <div class="grupo"><button class="sec" id="vmenos" aria-label="Mais devagar">−</button><span id="vel">vel 3</span><button class="sec" id="vmais" aria-label="Mais rápido">+</button></div>
+    <div class="grupo"><button class="sec" id="lmenos" aria-label="Letra menor">A−</button><button class="sec" id="lmais" aria-label="Letra maior">A+</button></div>
+    <button class="sec" id="inicioTexto" aria-label="Voltar o texto ao começo">↺</button>
+    <button id="gravar">● Gravar</button>
+  </div>
+</section>
+
+<section id="salvar">
+  <video id="previa" playsinline controls></video>
+  <div class="linha" style="justify-content:center">
+    <button id="compartilhar">Salvar vídeo</button>
+    <button class="sec" id="baixar">Baixar arquivo</button>
+    <button class="sec" id="descartar">Gravar de novo</button>
+  </div>
+</section>
+<div id="aviso"></div>
+
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const CHAVE = 'teleprompter-piovezan';
+  const salvo = JSON.parse(localStorage.getItem(CHAVE) || '{}');
+  const conf = { texto: salvo.texto || '', vel: salvo.vel || 3, tam: salvo.tam || 34 };
+  const guardar = () => { try { localStorage.setItem(CHAVE, JSON.stringify(conf)); } catch {} };
+
+  // ?roteiro=<texto codificado> preenche sozinho (o link.py gera o link)
+  const q = new URLSearchParams(location.search).get('roteiro');
+  if (q) { conf.texto = q; guardar(); history.replaceState(null, '', location.pathname); }
+  $('texto').value = conf.texto;
+  $('texto').addEventListener('input', e => { conf.texto = e.target.value; guardar(); });
+
+  // roteiros prontos (11/11): o Nuru manda; um toque põe o texto no teleprompter
+  const PRONTOS = [{"nome": "F-AB4 Abono", "texto": "Repare nessa linha do contracheque.\n\nSe ela aparece no seu, esse vídeo é pra você.\n\nVocê é servidor público federal, já podia se aposentar e decidiu continuar trabalhando? É por isso que essa linha está aí.\n\nVocê sabia que vários servidores públicos federais estão ingressando com a ação judicial para reaverem prejuízos que estão tendo no 13º e nas férias?\n\nVocê não precisa entender esse processo. Basta você encontrar essa linha no seu contracheque.\n\nQuer saber se você tá tendo prejuízo ou não?\n\nClica aqui embaixo e vem conversar comigo."}, {"nome": "F-BE1 Bonus", "texto": "Aposentado ou pensionista da Receita? Procura essa linha no seu contracheque agora.\n\nSe ela aparece no seu, esse vídeo é pra você.\n\nVocê sabia que vários servidores públicos da Receita Federal do Brasil estão ingressando com a ação judicial para reaverem prejuízos que estão tendo em seus contracheques?\n\nVocê não precisa entender esse processo. Basta você encontrar essa linha no seu contracheque.\n\nQuer saber se você tá tendo prejuízo ou não?\n\nClica aqui embaixo e vem conversar comigo."}];
+  for (const r of PRONTOS) { const b = document.createElement('button'); b.textContent = r.nome; b.style.cssText = 'padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.25);background:#A41815;color:#fff;font-size:15px';
+    b.onclick = () => { conf.texto = r.texto; $('texto').value = r.texto; guardar(); }; $('prontos').appendChild(b); }
+
+  const avisar = (m, ms = 4000) => { const a = $('aviso'); a.textContent = m; a.style.display = 'block'; clearTimeout(avisar.t); avisar.t = setTimeout(() => a.style.display = 'none', ms); };
+
+  $('colar').onclick = async () => {
+    try { const t = await navigator.clipboard.readText(); if (t) { $('texto').value = conf.texto = t; guardar(); } }
+    catch { avisar('Toque e segure no campo e escolha Colar.'); $('texto').focus(); }
+  };
+  $('limpar').onclick = () => { $('texto').value = conf.texto = ''; guardar(); $('texto').focus(); };
+
+  // ---------- câmera ----------
+  let fluxo = null;
+  async function ligarCamera() {
+    if (fluxo) return true;
+    if (!navigator.mediaDevices?.getUserMedia) { avisar('Este navegador não deixa usar a câmera aqui. Abra o endereço com https.'); return false; }
+    try {
+      fluxo = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 1920 }, height: { ideal: 1080 } },
+        audio: { echoCancellation: true, noiseSuppression: true }
+      });
+      $('cam').srcObject = fluxo;
+      return true;
+    } catch (e) {
+      avisar(e.name === 'NotAllowedError' ? 'A câmera ou o microfone não foram liberados. Libere nos ajustes do navegador.' : 'Não consegui abrir a câmera: ' + e.name);
+      return false;
+    }
+  }
+
+  $('abrir').onclick = async () => {
+    if (!conf.texto.trim()) { avisar('Cole o texto do roteiro primeiro.'); return; }
+    $('rolo').textContent = conf.texto;
+    aplicar(); posicao = 0; desenhar();
+    $('inicio').style.display = 'none'; $('palco').style.display = 'block';
+    await ligarCamera();
+  };
+  $('voltar').onclick = () => { if (gravando) return; parado = true; $('palco').style.display = 'none'; $('inicio').style.display = 'flex'; };
+
+  // ---------- rolagem ----------
+  let posicao = 0, rolando = false, parado = true, ultimo = 0;
+  const PX_POR_VEL = 14; // px por segundo a cada ponto de velocidade
+  function aplicar() {
+    document.documentElement.style.setProperty('--tam', conf.tam + 'px');
+    $('vel').textContent = 'vel ' + conf.vel;
+  }
+  function desenhar() { $('rolo').style.transform = `translateY(${-posicao}px)`; }
+  function laco(t) {
+    if (!rolando) return;
+    if (!parado) {
+      const dt = ultimo ? (t - ultimo) / 1000 : 0;
+      const fim = $('rolo').scrollHeight - innerHeight * 0.6;
+      posicao = Math.min(fim, posicao + conf.vel * PX_POR_VEL * dt);
+      desenhar();
+    }
+    ultimo = t; requestAnimationFrame(laco);
+  }
+  function rolar(b) { parado = !b; $('faixa').classList.toggle('pausado', !b && rolando); if (b && !rolando) { rolando = true; ultimo = 0; requestAnimationFrame(laco); } }
+  $('faixa').onclick = () => { if (!rolando) { rolar(true); return; } rolar(parado); };
+  $('vmais').onclick = () => { conf.vel = Math.min(15, conf.vel + 1); aplicar(); guardar(); };
+  $('vmenos').onclick = () => { conf.vel = Math.max(1, conf.vel - 1); aplicar(); guardar(); };
+  $('lmais').onclick = () => { conf.tam = Math.min(72, conf.tam + 4); aplicar(); guardar(); };
+  $('lmenos').onclick = () => { conf.tam = Math.max(20, conf.tam - 4); aplicar(); guardar(); };
+  $('inicioTexto').onclick = () => { posicao = 0; desenhar(); };
+  // arrastar a faixa ajusta o ponto do texto
+  let toque = null;
+  $('faixa').addEventListener('touchstart', e => { toque = e.touches[0].clientY; }, { passive: true });
+  $('faixa').addEventListener('touchmove', e => { const y = e.touches[0].clientY; posicao = Math.max(0, posicao + (toque - y)); toque = y; desenhar(); }, { passive: true });
+
+  // ---------- gravação ----------
+  let gravador = null, partes = [], gravando = false, inicioGrav = 0, relogio = 0, arquivo = null, tipo = '';
+  function escolherTipo() {
+    const op = ['video/mp4;codecs=avc1,mp4a', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
+    return op.find(t => window.MediaRecorder?.isTypeSupported?.(t)) || '';
+  }
+  const pausa = ms => new Promise(r => setTimeout(r, ms));
+  async function contar() {
+    const c = $('contagem'); c.style.display = 'flex';
+    for (const n of [3, 2, 1]) { c.textContent = n; await pausa(900); }
+    c.style.display = 'none';
+  }
+  async function comecar() {
+    if (!await ligarCamera()) return;
+    if (!window.MediaRecorder) { avisar('Este navegador não grava vídeo. Use o Safari (iPhone) ou o Chrome (Android).'); return; }
+    $('gravar').disabled = true;
+    await contar();
+    tipo = escolherTipo(); partes = [];
+    try { gravador = new MediaRecorder(fluxo, tipo ? { mimeType: tipo, videoBitsPerSecond: 8e6 } : undefined); }
+    catch { gravador = new MediaRecorder(fluxo); }
+    tipo = gravador.mimeType || tipo || 'video/mp4';
+    gravador.ondataavailable = e => { if (e.data && e.data.size) partes.push(e.data); };
+    gravador.onstop = terminou;
+    gravador.start(1000);
+    gravando = true; inicioGrav = Date.now();
+    $('gravar').disabled = false; $('gravar').classList.add('on'); $('gravar').textContent = '■ Parar';
+    $('tempo').style.display = 'block';
+    relogio = setInterval(() => { const s = Math.floor((Date.now() - inicioGrav) / 1000); $('tempo').textContent = String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); }, 250);
+    rolar(true);
+  }
+  function parar() {
+    if (!gravando) return;
+    gravando = false; clearInterval(relogio); rolar(false); $('faixa').classList.remove('pausado');
+    $('gravar').classList.remove('on'); $('gravar').textContent = '● Gravar'; $('tempo').style.display = 'none';
+    gravador.stop();
+  }
+  function terminou() {
+    const blob = new Blob(partes, { type: tipo.split(';')[0] });
+    const ext = tipo.includes('mp4') ? 'mp4' : 'webm';
+    const d = new Date(), z = n => String(n).padStart(2, '0');
+    const nome = `Teleprompter ${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())} ${z(d.getHours())}h${z(d.getMinutes())}.${ext}`;
+    arquivo = new File([blob], nome, { type: blob.type });
+    const url = URL.createObjectURL(blob);
+    $('previa').src = url; $('baixar').dataset.url = url; $('baixar').dataset.nome = nome;
+    $('compartilhar').style.display = navigator.canShare?.({ files: [arquivo] }) ? '' : 'none';
+    $('salvar').style.display = 'flex';
+  }
+  $('gravar').onclick = () => gravando ? parar() : comecar();
+  $('compartilhar').onclick = async () => { try { await navigator.share({ files: [arquivo], title: arquivo.name }); } catch (e) { if (e.name !== 'AbortError') avisar('Não deu para compartilhar. Use Baixar arquivo.'); } };
+  $('baixar').onclick = () => { const a = document.createElement('a'); a.href = $('baixar').dataset.url; a.download = $('baixar').dataset.nome; document.body.appendChild(a); a.click(); a.remove(); };
+  $('descartar').onclick = () => { $('salvar').style.display = 'none'; $('previa').removeAttribute('src'); posicao = 0; desenhar(); rolando = false; };
+
+  aplicar();
+  window.__tele = { conf, estado: () => ({ gravando, posicao, tipo, arquivo: arquivo && { nome: arquivo.name, tamanho: arquivo.size, tipo: arquivo.type } }) };
+})();
+</script>
+</body>
+</html>
