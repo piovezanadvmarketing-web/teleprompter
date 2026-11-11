@@ -67,7 +67,7 @@
 </section>
 
 <section id="salvar">
-  <video id="previa" playsinline controls preload="auto"></video>
+  <video id="previa" playsinline controls preload="metadata"></video>
   <button id="assistir" style="font-size:18px;padding:12px 22px;border-radius:99px;border:0;background:#A41815;color:#fff">▶ Assistir a prévia</button>
   <div class="linha" style="justify-content:center">
     <button id="compartilhar">Enviar para o Mac (AirDrop)</button>
@@ -212,7 +212,7 @@
     const nome = `Teleprompter ${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())} ${z(d.getHours())}h${z(d.getMinutes())}.${ext}`;
     arquivo = new File([blob], nome, { type: blob.type });
     const url = URL.createObjectURL(blob);
-    $('previa').src = url + '#t=0.1'; $('previa').load(); $('baixar').dataset.url = url; $('baixar').dataset.nome = nome;
+    $('previa').src = url; $('baixar').dataset.url = url; $('baixar').dataset.nome = nome;
     $('compartilhar').style.display = navigator.canShare?.({ files: [arquivo] }) ? '' : 'none';
     $('salvar').style.display = 'flex';
   }
