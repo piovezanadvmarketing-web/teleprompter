@@ -23,7 +23,7 @@
   #palco { position:fixed; inset:0; display:none; }
   video#cam { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transform:scaleX(-1); background:#000; }
   #faixa { touch-action:none; position:absolute; left:0; right:0; top:0; height:var(--alt,34vh); padding-top:env(safe-area-inset-top); background:rgba(10,10,10,.62); overflow:hidden; -webkit-mask-image:linear-gradient(#000 70%,transparent); mask-image:linear-gradient(#000 70%,transparent); }
-  #rolo { padding:calc(var(--alt,34vh) * .4 + 30px) 22px 60vh; font-size:var(--tam,34px); line-height:1.35; font-weight:600; white-space:pre-wrap; will-change:transform; text-shadow:0 1px 3px #000; }
+  #rolo { padding:calc(var(--alt,34vh) * .7 + 30px) 22px 60vh; font-size:var(--tam,34px); line-height:1.35; font-weight:600; white-space:pre-wrap; will-change:transform; text-shadow:0 1px 3px #000; }
   #faixa.pausado::after { content:"pausado — toque para continuar"; position:absolute; right:12px; bottom:14px; font-size:13px; background:var(--v); padding:4px 10px; border-radius:99px; }
   #marca { position:absolute; left:0; right:0; top:calc(env(safe-area-inset-top) + 30px + var(--tam,34px)*1.35); height:2px; background:rgba(164,24,21,.6); pointer-events:none; }
   #barra { position:absolute; left:0; right:0; bottom:0; padding:12px 12px max(14px,env(safe-area-inset-bottom)); display:flex; gap:8px; align-items:center; justify-content:center; flex-wrap:wrap; background:linear-gradient(transparent,rgba(0,0,0,.7)); }
@@ -164,7 +164,7 @@
   $('faixa').addEventListener('touchmove', e => { e.preventDefault(); const y = e.touches[0].clientY;
     if (Math.abs(y - inicioToque) > 8) arrastou = true;
     const fim = $('rolo').scrollHeight - innerHeight * 0.6;
-    posicao = Math.min(fim, Math.max(0, posicao + (toque - y))); toque = y; desenhar(); }, { passive: false });
+    posicao = Math.min(fim, Math.max(-$("faixa").clientHeight * 0.9, posicao + (toque - y))); toque = y; desenhar(); }, { passive: false });
   const soltar = () => { toque = null; ultimo = 0; };
   $('faixa').addEventListener('touchend', soltar); $('faixa').addEventListener('touchcancel', soltar);
 
