@@ -34,7 +34,7 @@
   #contagem { position:absolute; inset:0; display:none; align-items:center; justify-content:center; font-size:30vmin; font-weight:800; text-shadow:0 4px 30px #000; pointer-events:none; }
   #tempo { position:absolute; right:14px; top:calc(var(--alt,34vh) + 10px); background:var(--v); padding:4px 12px; border-radius:99px; font-variant-numeric:tabular-nums; display:none; }
   #salvar { position:fixed; inset:0; background:rgba(28,27,24,.96); display:none; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:24px; text-align:center; }
-  #salvar video { max-width:100%; max-height:50vh; border-radius:12px; }
+  #salvar video { max-width:100%; max-height:62vh; background:#000; border-radius:12px; }
   #aviso { position:fixed; left:12px; right:12px; bottom:calc(90px + env(safe-area-inset-bottom)); background:var(--v); padding:12px 14px; border-radius:14px; display:none; font-size:14px; }
 </style>
 </head>
@@ -67,7 +67,8 @@
 </section>
 
 <section id="salvar">
-  <video id="previa" playsinline controls></video>
+  <video id="previa" playsinline controls preload="auto"></video>
+  <button id="assistir" style="font-size:18px;padding:12px 22px;border-radius:99px;border:0;background:#A41815;color:#fff">▶ Assistir a prévia</button>
   <div class="linha" style="justify-content:center">
     <button id="compartilhar">Salvar vídeo</button>
     <button class="sec" id="baixar">Baixar arquivo</button>
@@ -211,11 +212,12 @@
     const nome = `Teleprompter ${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())} ${z(d.getHours())}h${z(d.getMinutes())}.${ext}`;
     arquivo = new File([blob], nome, { type: blob.type });
     const url = URL.createObjectURL(blob);
-    $('previa').src = url; $('baixar').dataset.url = url; $('baixar').dataset.nome = nome;
+    $('previa').src = url + '#t=0.1'; $('previa').load(); $('baixar').dataset.url = url; $('baixar').dataset.nome = nome;
     $('compartilhar').style.display = navigator.canShare?.({ files: [arquivo] }) ? '' : 'none';
     $('salvar').style.display = 'flex';
   }
   $('gravar').onclick = () => gravando ? parar() : comecar();
+  $('assistir').onclick = () => { const v = $('previa'); v.muted = false; v.currentTime = 0; v.play(); };
   $('compartilhar').onclick = async () => { try { await navigator.share({ files: [arquivo], title: arquivo.name }); } catch (e) { if (e.name !== 'AbortError') avisar('Não deu para compartilhar. Use Baixar arquivo.'); } };
   $('baixar').onclick = () => { const a = document.createElement('a'); a.href = $('baixar').dataset.url; a.download = $('baixar').dataset.nome; document.body.appendChild(a); a.click(); a.remove(); };
   $('descartar').onclick = () => { $('salvar').style.display = 'none'; $('previa').removeAttribute('src'); posicao = 0; desenhar(); rolando = false; };
